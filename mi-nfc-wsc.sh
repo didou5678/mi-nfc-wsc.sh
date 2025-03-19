@@ -35,9 +35,9 @@ cat << EOT
 
 
 调用示例
- sh nfc-wifi-build -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0020 -e 000c -b /tmp/nfc.bak
+ sh mi-nfc-wsc.sh -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0020 -e 000c -b /tmp/nfc.bak
 
-sh nfc-wifi-build  -s hahaha-ssid -p  a12345678
+sh mi-nfc-wsc.sh -s hahaha-ssid -p  a12345678
 
 EOT
 return 0

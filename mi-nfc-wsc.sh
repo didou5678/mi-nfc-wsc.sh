@@ -215,7 +215,7 @@ NDEFHDR="0xd2 0x17"
 NDEFPLL="0x00" #payloadlen占位填充0x00 
 
 
-#NDEFTYPE=$(echo -n "application/vnd.wfa.wsc"|xxd -i -c 30|sed 's/,//g')
+#NDEFTYPE=$(echo -n "application/vnd.wfa.wsc"|xxd -i|sed 's/,//g')
 #NDEFTYPELEN=$(echo -n ${NDEFTYPE}|awk '{print NF}')  == 0x17 
 
 NDEFTYPE="0x61 0x70 0x70 0x6c 0x69 0x63 0x61 0x74 0x69 0x6f 0x6e 0x2f 0x76 0x6e 0x64 0x2e 0x77 0x66 0x61 0x2e 0x77 0x73 0x63"
@@ -266,7 +266,7 @@ HDRENC="$H16 $L16"
 
 #wifi psk 1027
 HDR1027="0x10 0x27"
-HDR1027DATA=$(echo -n "${varPSW}"|xxd -c 32 -i|sed 's/,//g')
+HDR1027DATA=$(echo -n "${varPSW}"|xxd -i|sed 's/,//g')
 pswlen=$(echo -n ${HDR1027DATA}|awk '{print NF}')
 HDR1027LEN=$(printf  "0x%02x" ${pswlen}) #长度不会超过0xff 下面填充00
 HDR1027LEN="0x00 $HDR1027LEN"

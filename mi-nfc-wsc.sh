@@ -21,7 +21,7 @@ usage() {
 cat << EOT
 构造 nfc vnd.wfa.wsc  ,实现 手机扫一下nfc wifi自动连接 
 只考虑一个payload的情况
-这个脚本依赖软件 i2ctransfer,xxd,coreutils-sleep
+这个脚本依赖软件 i2ctransfer,coreutils-od,coreutils-sleep
 重复调用该脚本只会覆盖原有的ndef数据 不会追加数据 
 
 -I 指定nfc i2cbus地址 使用 i2cdetect -l 获取 i2c-X  默认值 0
@@ -50,13 +50,8 @@ echo "i2ctransfer no found,via 'opkg install i2c-tools' then retry"
 exit
 fi
 
-if [ $(opkg list-installed|grep -c "xxd") -ne 1 ]; then
-echo "xxd no found,via 'opkg install xxd' then retry" 
-exit
-fi
-
-if [ $(opkg list-installed|grep -c "xxd") -ne 1 ]; then
-echo "xxd no found,via 'opkg install xxd' then retry" 
+if [ $(opkg list-installed|grep -c "coreutils-od") -ne 1 ]; then
+echo "od no found,via 'opkg install coreutils-od' then retry" 
 exit
 fi
 
@@ -215,7 +210,7 @@ NDEFHDR="0xd2 0x17"
 NDEFPLL="0x00" #payloadlen占位填充0x00 
 
 
-#NDEFTYPE=$(echo -n "application/vnd.wfa.wsc"|xxd -i|sed 's/,//g')
+#NDEFTYPE=$(echo -n "application/vnd.wfa.wsc"|xxd -i -c 30|sed 's/,//g')
 #NDEFTYPELEN=$(echo -n ${NDEFTYPE}|awk '{print NF}')  == 0x17 
 
 NDEFTYPE="0x61 0x70 0x70 0x6c 0x69 0x63 0x61 0x74 0x69 0x6f 0x6e 0x2f 0x76 0x6e 0x64 0x2e 0x77 0x66 0x61 0x2e 0x77 0x73 0x63"
@@ -235,7 +230,9 @@ HDR1026="0x10 0x26 0x00 0x01 0x01"
 
 #ssid 1045
 HDR1045="0x10 0x45"
-HDR1045DATA=$(echo -n "${varSSID}"|xxd -i -c 30|sed 's/,//g')
+#HDR1045DATA=$(echo -n "${varSSID}"|xxd -c 30 -i |sed 's/,//g') ------------------------------------------------------------
+
+HDR1045DATA=$(echo -n "${varSSID}" | od -An -t x1|awk '{for(i=1;i<=NF;i++) {printf "0x%s " ,$i}}')
 ssidlen=$(echo -n ${HDR1045DATA}|awk '{print NF}')
 HDR1045LEN=$(printf  "0x%02x" ${ssidlen}) #ssid长度不会超过0xff 因此下面填充00
 HDR1045LEN="0x00 $HDR1045LEN"
@@ -266,7 +263,8 @@ HDRENC="$H16 $L16"
 
 #wifi psk 1027
 HDR1027="0x10 0x27"
-HDR1027DATA=$(echo -n "${varPSW}"|xxd -c 30 -i|sed 's/,//g')
+#HDR1027DATA=$(echo -n "${varPSW}"|xxd -c 30 -i|sed 's/,//g')  ---------------------------------------------------
+HDR1027DATA=$(echo -n "${varPSW}" | od -An -t x1|awk '{for(i=1;i<=NF;i++) {printf "0x%s " ,$i}}')
 pswlen=$(echo -n ${HDR1027DATA}|awk '{print NF}')
 HDR1027LEN=$(printf  "0x%02x" ${pswlen}) #长度不会超过0xff 下面填充00
 HDR1027LEN="0x00 $HDR1027LEN"
@@ -325,9 +323,7 @@ OFS_HDR=$(printf "0x%02x" $OFS_HDR)
 #echo  "$OFS_HDR = $d "
 
 i2ctransfer -y -v ${varBUSADDR} w3@${varCHIPADDR} 0x00 $OFS_HDR $d
-
 /usr/libexec/sleep-coreutils 0.1
-
 done
 
  
@@ -350,9 +346,6 @@ OFS_PL=$((OFS_PL + 1))
 OFS_PL=$(printf "0x%02x" $OFS_PL)
 
 #echo $OFS_PL=$d
-
-
-
 i2ctransfer -y -v ${varBUSADDR} w3@${varCHIPADDR} 0x00 $OFS_PL $d
 
 #清空为0x00
@@ -360,8 +353,6 @@ i2ctransfer -y -v ${varBUSADDR} w3@${varCHIPADDR} 0x00 $OFS_PL $d
 
 #由于i2c 写入太快会无效  使命令执行暂停100ms
 /usr/libexec/sleep-coreutils 0.1
-
-
 done
 
 

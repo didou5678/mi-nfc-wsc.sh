@@ -235,7 +235,7 @@ HDR1026="0x10 0x26 0x00 0x01 0x01"
 
 #ssid 1045
 HDR1045="0x10 0x45"
-HDR1045DATA=$(echo -n "${varSSID}"|xxd -i -c 32|sed 's/,//g')
+HDR1045DATA=$(echo -n "${varSSID}"|xxd -i -c 30|sed 's/,//g')
 ssidlen=$(echo -n ${HDR1045DATA}|awk '{print NF}')
 HDR1045LEN=$(printf  "0x%02x" ${ssidlen}) #ssid长度不会超过0xff 因此下面填充00
 HDR1045LEN="0x00 $HDR1045LEN"
@@ -266,7 +266,7 @@ HDRENC="$H16 $L16"
 
 #wifi psk 1027
 HDR1027="0x10 0x27"
-HDR1027DATA=$(echo -n "${varPSW}"|xxd -i|sed 's/,//g')
+HDR1027DATA=$(echo -n "${varPSW}"|xxd -c 30 -i|sed 's/,//g')
 pswlen=$(echo -n ${HDR1027DATA}|awk '{print NF}')
 HDR1027LEN=$(printf  "0x%02x" ${pswlen}) #长度不会超过0xff 下面填充00
 HDR1027LEN="0x00 $HDR1027LEN"

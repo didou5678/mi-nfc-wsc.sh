@@ -145,6 +145,7 @@ openwrt 系统
 -h 显示help
 
 执行 例子
+
 sh mi-nfc-wsc.sh -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0020 -e 000c -b /tmp/nfc.bak
 
 sh mi-nfc-wsc.sh -s hahaha-ssid -p a12345678

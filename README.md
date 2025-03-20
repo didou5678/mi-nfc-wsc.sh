@@ -132,9 +132,22 @@ i2ctransfer -y -v ${varBUSADDR} w3@${varCHIPADDR} 0x00 ${OFS_NDEFSIZE} $TAGSIZE
 逐个写入 nfc芯片
 
 
+# 执行脚本 mi-nfc-wsc.sh
+openwrt 系统 
+选项
+-I 指定nfc i2cbus地址 使用 i2cdetect -l 获取 i2c-X  默认值 0
+-C 指定chipaddress    使用 i2cdetect -y 0获取 默认值 0x57
+-b 执行写入操作前 备份当前nfc tag数据到文件 如果没有指定则不会执行备份
+-s 指定 ssid 字符
+-p 指定wifi 密码
+-a 认证方式 0001 Open; 0002 WPA; 0004 shared; 0008 wpa-eap ; 0010 wpa2-eap; 0020 wpa2
+-e 加密方式 可选值 0001 None ; 0002 WEP; 0004 TKIP; 0008 AES; 000c MIXED
+-h 显示help
 
+执行 例子
+sh mi-nfc-wsc.sh -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0020 -e 000c -b /tmp/nfc.bak
 
-
+sh mi-nfc-wsc.sh -s hahaha-ssid -p a12345678
 
 
 

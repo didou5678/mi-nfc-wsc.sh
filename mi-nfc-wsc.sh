@@ -35,7 +35,7 @@ cat << EOT
 
 
 调用示例
- sh mi-nfc-wsc.sh -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0020 -e 000c -b /tmp/nfc.bak
+ sh mi-nfc-wsc.sh -I 0 -C 0x57 -s MyNfcTest -p  pass+W0rd -a 0040 -e 000c -b /tmp/nfc.bak
 
 sh mi-nfc-wsc.sh -s hahaha-ssid -p  a12345678
 
@@ -132,6 +132,13 @@ echo "i2c device i2cbus at: ${varBUSADDR} chip at: ${varCHIPADDR}   no found"
 exit
 fi
 ########################################################
+
+
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0 r8)
+VAR=$(echo $VAR|sed 's/0x//g'|sed 's/[ ]/:/g')
+echo "nfc tag id: $VAR"
+
+
 #BCC
 # ct=0x88
 v=136
@@ -145,9 +152,9 @@ v=$((v ^ t))
 done
 
 if [ $v -eq 0 ]; then
-echo "CT1 verify ok"
+echo "CT1 check ok"
 else
-echo "CT1 verify fault"
+echo "CT1 check fault"
 fi
 
  
@@ -161,42 +168,56 @@ v=$((v ^ t))
 done
 
 if [ $v -eq 0 ]; then
-echo "CT2 verify ok"
+echo "CT2 check ok"
 else
-echo "CT2 verify fault"
+echo "CT2 check fault"
 fi
 
+#internal
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x9  r1)
+echo "internal: $VAR"
+
+#Static lock
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0a r2)
+echo "nfc static locl: $VAR"
+
+#CC
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0c  r1)
+echo "cc function cluster code: $VAR"
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0d  r1)
+echo "cc nfc tag version: $VAR"
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0e  r1)
+VAR=$(printf %d $VAR)
+ndefmaxsize=$((VAR * 8))
+echo "cc ndef max size in byte: $ndefmaxsize"
+VAR=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x0 0x0f  r1)
+echo "cc nfc tag access capability: $VAR"
+
+
+
+#tag大小的偏移量
+OFS_NDEFSIZE=0x11
+
+ndefcursize=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 $OFS_NDEFSIZE r1)
+ndefcursize=$(printf %d $ndefcursize)
+echo "ndef current size in byte $ndefcursize"
 
 
 ########################################################
 # backup nfc data
 
-#tag大小的偏移量
-OFS_NDEFSIZE=0x11
-
-
 ##备份整个nfc tag
 #if [ -n "${varBAKFILE}" ]; then
-#backup the whole nfc tag 
-#tagsize=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 0x0e r1)
-#/usr/libexec/sleep-coreutils 0.1
-#tagsize=$(printf %d $tagsize)
-#tagsize=$((tagsize * 8))
-##echo $tagsize
-#i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 0x00 r${tagsize} > ${varBAKFILE}
+#ndefmaxsize=$((ndefmaxsize+ $OFS_NDEFSIZE +1))
+#i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 0x00 r${ndefmaxsize} > ${varBAKFILE}
 #fi
 
 
 
-#仅备份 有效数据的nfc size 
+#仅备份 有效数据的nfc size  包含 nfc头+ndef
 if [ -n "${varBAKFILE}" ]; then
-tagsize=$(i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 $OFS_NDEFSIZE r1)
-/usr/libexec/sleep-coreutils 0.1
-tagsize=$(printf %d $tagsize)
-tagsize=$((tagsize + $OFS_NDEFSIZE))
-tagsize=$((tagsize + 1))
-i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 0x00 r${tagsize} > ${varBAKFILE}
-
+ndefcursize=$((ndefcursize + $OFS_NDEFSIZE +1))
+i2ctransfer -y ${varBUSADDR} w2@${varCHIPADDR} 0x00 0x00 r${ndefcursize} > ${varBAKFILE}
 fi
 
 
